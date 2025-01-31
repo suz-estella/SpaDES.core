@@ -45,7 +45,8 @@ Imports:
     terra (>= 1.7-46),
     tools,
     utils,
-    whisker
+    whisker,
+    testthat (>= 1.0.2)
 Suggests:
     archive,
     CircStats,
@@ -74,7 +75,6 @@ Suggests:
     sp,
     SpaDES.tools (>= 2.0.0),
     tcltk,
-    testthat (>= 1.0.2),
     withr
 Remotes:
     ropensci/NLMR,
@@ -133,6 +133,7 @@ Collate:
     'spades-core-deprecated.R'
     'spades-core-package.R'
     'suppliedElsewhere.R'
+    'testthat.R'
     'zzz.R'
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
