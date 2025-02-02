@@ -7,17 +7,14 @@
 ## to make available to all users.
 ## ************************************************************************** ##
 
-#' SpaDES test: Set up environment
+#' SpaDES test: Set up global options
 #'
-#' Set local global options and sink output to file. See **Details**.
+#' Set local global options for testing. See **Details**.
 #'
-#' This function was designed to be called in a \code{tests/testthat/setup.R} file
-#' After \code{\link{SpaDEStestSetUpDirectories}}.
-#' The defaults aim to provide an optimal environment for both standard and
-#' interactive testing.
+#' This function was designed to be called in a \code{tests/testthat/setup.R} file.
 #'
-#' @param localOutputSink logical. Sink output to a temporary file
-#' @param localMessageSink logical. Sink messages to a temporary file
+#' The defaults aim to provide an optimal environment for both standard
+#' and interactive testing.
 #'
 #' @param reproducible.verbose          reproducible.verbose R package global option.
 #' @param Require.verbose               Require.verbose R package global option.
@@ -26,29 +23,18 @@
 #' @param spades.moduleDocument         spades.moduleDocument R package global option.
 #' @param SpaDES.project.updateRprofile SpaDES.project R package global option.
 #'
-#' @param spadesTestPaths list. Optional.
-#' List of test paths where \code{spadesTestPaths$temp$root} is the location
-#' of the output and message sink files.
-#' @param teardownEnv environment. Optional. Environment to set up.
+#' @param teardownEnv environment. Optional. Environment to use for scoping.
 #' The default for testing is the \code{testthat::teardown_env()}.
 #'
 #' @export
-SpaDEStestSetUpEnvironment <- function(
-
-    # Sink output and messages
-    localOutputSink  = testthat::is_testing(),
-    localMessageSink = FALSE,
-
-    # Set SpaDES R package global options
+SpaDEStestSetGlobalOptions <- function(
     reproducible.verbose          = if (testthat::is_testing()) -2,
     Require.verbose               = if (testthat::is_testing()) -2,
     Require.cloneFrom             = Sys.getenv("R_LIBS_USER"),
     spades.moduleCodeChecks       = if (testthat::is_testing()) FALSE,
     spades.moduleDocument         = FALSE,
     SpaDES.project.updateRprofile = FALSE,
-
-    spadesTestPaths = .test_directories(),
-    teardownEnv     = if (testthat::is_testing()) testthat::teardown_env() else parent.frame(2)){
+    teardownEnv = if (testthat::is_testing()) testthat::teardown_env()){
 
   # Set global options
   localOptions <- list(
@@ -62,16 +48,11 @@ SpaDEStestSetUpEnvironment <- function(
   localOptions <- localOptions[!sapply(localOptions, is.null)]
   #localOptions <- localOptions[!names(localOptions) %in% names(options())]
 
-  withr::local_options(localOptions, .local_envir = teardownEnv)
-
-  # Sink output and messages to file
-  if (localOutputSink)  withr::local_output_sink(
-    file.path(spadesTestPaths$temp$root, "local_output_sink.txt"),
-    .local_envir = teardownEnv)
-
-  if (localMessageSink) withr::local_message_sink(
-    file.path(spadesTestPaths$temp$root, "local_message_sink.txt"),
-    .local_envir = teardownEnv)
+  if (!is.null(teardownEnv)){
+    withr::local_options(localOptions, .local_envir = teardownEnv)
+  }else{
+    options(localOptions)
+  }
 }
 
 
@@ -83,8 +64,8 @@ SpaDEStestSetUpEnvironment <- function(
 #'
 #' This function will create a temporary directory structure
 #' that will be removed on test teardown.
-#' The RProject module will be copied to the "modules" sub-directory
-#' to be available to tests.
+#' By default, the RProject will be considered a module, and it is copied
+#' to the "modules" sub-directory to be available to tests.
 #' An R package "library" sub-directory will be initialized
 #' and the initial library paths are restored on teardown.
 #'
@@ -96,7 +77,7 @@ SpaDEStestSetUpEnvironment <- function(
 #' @param modules character. if \code{copyModule = TRUE}, copy these modules.
 #' By default, only the RProject module is copied.
 #' If other modules are on the list, they must also be located in the RProject parent directory.
-#' @param teardownEnv environment. Optional. Environment to set up.
+#' @param teardownEnv environment. Optional. Environment to use for scoping.
 #' The default for testing is the \code{testthat::teardown_env()}.
 #' @param tempDir character. Optional. Path to location of temporary test directory.
 #'
@@ -105,11 +86,11 @@ SpaDEStestSetUpEnvironment <- function(
 SpaDEStestSetUpDirectories <- function(
     testPaths   = "testdata",
     copyModule  = testthat::is_testing(), modules = NULL,
-    teardownEnv = if (testthat::is_testing()) testthat::teardown_env() else parent.frame(2),
+    teardownEnv = if (testthat::is_testing()) testthat::teardown_env(),
     tempDir     = tempdir()){
 
   # List test paths and temporary directories
-  spadesTestPaths <- .test_directories(testPaths = testPaths)
+  spadesTestPaths <- .test_directories(tempDir = tempDir, testPaths = testPaths)
 
   # Create temporary directories
   for (d in spadesTestPaths$temp) dir.create(d)
@@ -117,12 +98,14 @@ SpaDEStestSetUpDirectories <- function(
   if (!copyModule) spadesTestPaths$temp$modules <- dirname(spadesTestPaths$RProj)
 
   # Remove temporary directories on test teardown
-  withr::defer({
-    unlink(spadesTestPaths$temp$root, recursive = TRUE)
-    if (file.exists(spadesTestPaths$temp$root)) warning(
-      "Temporary test directory could not be removed: ",
-      spadesTestPaths$temp$root, call. = FALSE)
-  }, envir = teardownEnv, priority = "last")
+  if (!is.null(teardownEnv)){
+    withr::defer({
+      unlink(spadesTestPaths$temp$root, recursive = TRUE)
+      if (file.exists(spadesTestPaths$temp$root)) warning(
+        "Temporary test directory could not be removed: ",
+        spadesTestPaths$temp$root, call. = FALSE)
+    }, envir = teardownEnv, priority = "last")
+  }
 
   # Copy module(s) to the temporary testing directory
   if (copyModule){
@@ -141,8 +124,10 @@ SpaDEStestSetUpDirectories <- function(
   # Restore library paths after testing
   ## This likely should be where setupProject() is called (inside test_that),
   ## but the packages that are left attached after running SpaDES stops it
-  libPathsInit <- .libPaths()
-  withr::local_libpaths(libPathsInit, .local_envir = teardownEnv)
+  if (!is.null(teardownEnv)){
+    libPathsInit <- .libPaths()
+    withr::local_libpaths(libPathsInit, .local_envir = teardownEnv)
+  }
 
   # Install "testthat" with dependencies into the project R packages directory
   ## This prevents dependencies from not being found when .libPaths() changes
@@ -224,11 +209,10 @@ SpaDEStestSetUpDirectories <- function(
   )
 }
 
-#' SpaDES test: Muffle conditions
+#' SpaDES test: Muffle output
 #'
 #' A wrapper of \code{\link{withCallingHandlers}}
-#' that intends to handle messages and warnings that are not relevant to
-#' test success from calls to
+#' that intends to handle output, messages, and innocuous warnings from calls to
 #' \code{\link[SpaDES.core]{simInit}},
 #' \code{\link[SpaDES.core]{spades}},
 #' and \code{\link[SpaDES.project]{setupProject}}.
@@ -236,6 +220,7 @@ SpaDEStestSetUpDirectories <- function(
 #' or \code{option("spades.test.suppressWarnings" = TRUE)}.
 #'
 #' @param expr expression to be evaluated inside \code{\link{withCallingHandlers}}.
+#' @param suppressOutput logical. Sink output to a temporary file.
 #' @param handleConditions logical. If FALSE, the expression will be evaluated
 #' as normal outside of \code{\link{withCallingHandlers}}.
 #' This is the default for interactive testing.
@@ -244,10 +229,18 @@ SpaDEStestSetUpDirectories <- function(
 #' @param ... optional additional arguments to \code{\link{withCallingHandlers}}.
 #'
 #' @export
-SpaDEStestMuffleConditions <- function(
+SpaDEStestMuffleOutput <- function(
     expr, ...,
+    suppressOutput   = testthat::is_testing(),
     handleConditions = testthat::is_testing(),
     suppressWarnings = getOption("spades.test.suppressWarnings", default = FALSE)){
+
+  # Sink output and messages to file
+  if (suppressOutput){
+    tempSink <- tempfile("local_output_sink_", fileext = ".txt")
+    withr::local_output_sink(tempSink)
+    withr::defer(unlink(tempSink))
+  }
 
   if (handleConditions | suppressWarnings){
 

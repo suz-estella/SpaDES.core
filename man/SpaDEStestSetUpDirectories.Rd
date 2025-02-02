@@ -8,7 +8,7 @@ SpaDEStestSetUpDirectories(
   testPaths = "testdata",
   copyModule = testthat::is_testing(),
   modules = NULL,
-  teardownEnv = if (testthat::is_testing()) testthat::teardown_env() else parent.frame(2),
+  teardownEnv = if (testthat::is_testing()) testthat::teardown_env(),
   tempDir = tempdir()
 )
 }
@@ -24,7 +24,7 @@ It will be copied to the temporary test directories before testing.}
 By default, only the RProject module is copied.
 If other modules are on the list, they must also be located in the RProject parent directory.}
 
-\item{teardownEnv}{environment. Optional. Environment to set up.
+\item{teardownEnv}{environment. Optional. Environment to use for scoping.
 The default for testing is the \code{testthat::teardown_env()}.}
 
 \item{tempDir}{character. Optional. Path to location of temporary test directory.}
@@ -40,8 +40,8 @@ This function was designed to be called in a \code{tests/testthat/setup.R} file.
 
 This function will create a temporary directory structure
 that will be removed on test teardown.
-The RProject module will be copied to the "modules" sub-directory
-to be available to tests.
+By default, the RProject will be considered a module, and it is copied
+to the "modules" sub-directory to be available to tests.
 An R package "library" sub-directory will be initialized
 and the initial library paths are restored on teardown.
 }
