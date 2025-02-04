@@ -133,7 +133,7 @@ SpaDEStestSetUpDirectories <- function(
   ## This prevents dependencies from not being found when .libPaths() changes
   withr::with_options(
     c(Require.cloneFrom = .libPaths()[1]),
-    Require::Require("testthat", libPaths = spadesTestPaths$temp$libPath,
+    Require::Require("testthat", libPaths = spadesTestPaths$temp$packages,
                      dependencies = TRUE, verbose = -2)
   )
 
@@ -162,7 +162,7 @@ SpaDEStestSetUpDirectories <- function(
   spadesTestPaths$temp$inputs   <- file.path(spadesTestPaths$temp$root, "inputs")   # For shared inputs
   spadesTestPaths$temp$outputs  <- file.path(spadesTestPaths$temp$root, "outputs")  # For function test outputs
   spadesTestPaths$temp$modules  <- file.path(spadesTestPaths$temp$root, "modules")  # For modules
-  spadesTestPaths$temp$libPath  <- file.path(spadesTestPaths$temp$root, "library")  # R package library
+  spadesTestPaths$temp$packages <- file.path(spadesTestPaths$temp$root, "library")  # R package library
   spadesTestPaths$temp$projects <- file.path(spadesTestPaths$temp$root, "projects") # For project directories
 
   # Return
