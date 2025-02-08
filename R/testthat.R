@@ -121,21 +121,33 @@ SpaDEStestSetUpDirectories <- function(
     }
   }
 
+  # Install "testthat" with dependencies into the project R packages directory
+  ## This prevents dependencies from not being found when .libPaths() changes
+  libPathsInit <- .libPaths()
+  withr::defer(.libPaths(libPathsInit))
+
+  Require::setLibPaths(
+    libPaths       = c(spadesTestPaths$temp$packages, libPathsInit[-1]),
+    standAlone     = TRUE,
+    updateRprofile = FALSE,
+    exact          = FALSE,
+    verbose        = -2
+  )
+  withr::with_options(
+    c(Require.cloneFrom = libPathsInit[1]),
+    Require::Install(
+      "testthat",
+      dependencies = TRUE,
+      standAlone   = TRUE,
+      verbose      = -2
+    ))
+
   # Restore library paths after testing
   ## This likely should be where setupProject() is called (inside test_that),
   ## but the packages that are left attached after running SpaDES stops it
   if (!is.null(teardownEnv)){
-    libPathsInit <- .libPaths()
     withr::local_libpaths(libPathsInit, .local_envir = teardownEnv)
   }
-
-  # Install "testthat" with dependencies into the project R packages directory
-  ## This prevents dependencies from not being found when .libPaths() changes
-  withr::with_options(
-    c(Require.cloneFrom = .libPaths()[1]),
-    Require::Require("testthat", libPaths = spadesTestPaths$temp$packages,
-                     dependencies = TRUE, verbose = -2)
-  )
 
   # Return test directories
   spadesTestPaths
