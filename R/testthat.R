@@ -233,8 +233,7 @@ SpaDEStestSetUpDirectories <- function(
   copyFiles <- subset(modFiles, name %in% include)
 
   if (nrow(copyFiles) == 0) stop(
-    "Module files not found in directory: ",
-    file.path(modulePathFull, moduleName))
+    "Module files not found in directory: ", modulePathFull)
 
   copySuccess <- c()
   for (i in 1:nrow(copyFiles)){
