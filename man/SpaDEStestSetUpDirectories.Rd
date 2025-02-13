@@ -6,10 +6,13 @@
 \usage{
 SpaDEStestSetUpDirectories(
   testPaths = "testdata",
-  copyModule = testthat::is_testing(),
-  modules = NULL,
+  modulePath = NULL,
+  moduleRepos = NULL,
+  require = NULL,
+  copyModules = testthat::is_testing(),
   teardownEnv = if (testthat::is_testing()) testthat::teardown_env(),
-  tempDir = tempdir()
+  tempDir = tempdir(),
+  ...
 )
 }
 \arguments{
@@ -17,17 +20,26 @@ SpaDEStestSetUpDirectories(
 directory to add to the file list.
 By default a test data directory is included with location \code{tests/testthat/testdata}.}
 
-\item{copyModule}{logical. If TRUE, the RProject must be a module.
-It will be copied to the temporary test directories before testing.}
+\item{modulePath}{character.
+By default, it is assumed the R project is a single module to be tested.
+Otherwise, provide a directory path (relative to the R project root)
+that contains modules to be tested.
+Ignored if \code{moduleRepos} is provided.}
 
-\item{modules}{character. if \code{copyModule = TRUE}, copy these modules.
-By default, only the RProject module is copied.
-If other modules are on the list, they must also be located in the RProject parent directory.}
+\item{moduleRepos}{character. Github repository locations of modules to test.}
+
+\item{require}{character. Additional R packages to require}
+
+\item{copyModules}{logical.
+If TRUE, local modules will be copied to the temporary test directories before testing.
+Ignored if \code{moduleRepos} is provided.}
 
 \item{teardownEnv}{environment. Optional. Environment to use for scoping.
 The default for testing is the \code{testthat::teardown_env()}.}
 
 \item{tempDir}{character. Optional. Path to location of temporary test directory.}
+
+\item{...}{passed to \code{\link[SpaDES.project]{setupProject}}}
 }
 \value{
 list of test paths
@@ -40,8 +52,5 @@ This function was designed to be called in a \code{tests/testthat/setup.R} file.
 
 This function will create a temporary directory structure
 that will be removed on test teardown.
-By default, the RProject will be considered a module, and it is copied
-to the "modules" sub-directory to be available to tests.
-An R package "library" sub-directory will be initialized
-and the initial library paths are restored on teardown.
+\code{\link[SpaDES.project]{setupProject}} is called to initialize modules and R packages.
 }

@@ -64,30 +64,37 @@ SpaDEStestSetGlobalOptions <- function(
 #'
 #' This function will create a temporary directory structure
 #' that will be removed on test teardown.
-#' By default, the RProject will be considered a module, and it is copied
-#' to the "modules" sub-directory to be available to tests.
-#' An R package "library" sub-directory will be initialized
-#' and the initial library paths are restored on teardown.
+#' \code{\link[SpaDES.project]{setupProject}} is called to initialize modules and R packages.
 #'
 #' @param testPaths file or directory paths within the \code{tests/testthat}
 #' directory to add to the file list.
 #' By default a test data directory is included with location \code{tests/testthat/testdata}.
-#' @param copyModule logical. If TRUE, the RProject must be a module.
-#' It will be copied to the temporary test directories before testing.
-#' @param modules character. if \code{copyModule = TRUE}, copy these modules.
-#' By default, only the RProject module is copied.
-#' If other modules are on the list, they must also be located in the RProject parent directory.
+#' @param modulePath character.
+#' By default, it is assumed the R project is a single module to be tested.
+#' Otherwise, provide a directory path (relative to the R project root)
+#' that contains modules to be tested.
+#' Ignored if \code{moduleRepos} is provided.
+#' @param copyModules logical.
+#' If TRUE, local modules will be copied to the temporary test directories before testing.
+#' Ignored if \code{moduleRepos} is provided.
+#' @param moduleRepos character. Github repository locations of modules to test.
+#' @param require character. Additional R packages to require
 #' @param teardownEnv environment. Optional. Environment to use for scoping.
 #' The default for testing is the \code{testthat::teardown_env()}.
 #' @param tempDir character. Optional. Path to location of temporary test directory.
+#' @param ... passed to \code{\link[SpaDES.project]{setupProject}}
 #'
 #' @return list of test paths
 #' @export
 SpaDEStestSetUpDirectories <- function(
     testPaths   = "testdata",
-    copyModule  = testthat::is_testing(), modules = NULL,
+    modulePath  = NULL,
+    moduleRepos = NULL,
+    require     = NULL,
+    copyModules = testthat::is_testing(),
     teardownEnv = if (testthat::is_testing()) testthat::teardown_env(),
-    tempDir     = tempdir()){
+    tempDir     = tempdir(),
+    ...){
 
   # List test paths and temporary directories
   spadesTestPaths <- .test_directories(tempDir = tempDir, testPaths = testPaths)
@@ -95,9 +102,75 @@ SpaDEStestSetUpDirectories <- function(
   # Create temporary directories
   for (d in spadesTestPaths$temp) dir.create(d)
 
-  if (!copyModule) spadesTestPaths$temp$modules <- dirname(spadesTestPaths$RProj)
+  if (is.null(moduleRepos)){
+
+    if (is.null(modulePath)){
+
+      # R Project is a module
+      modulePath <- dirname(spadesTestPaths$RProj)
+      modules <- basename(spadesTestPaths$RProj)
+
+    }else{
+
+      # R Project has a directory containing modules
+      modulePath <- file.path(spadesTestPaths$RProj, modulePath)
+      modules <- list.files(modulePath)
+    }
+
+    # Copy module(s) to the temporary testing directory
+    if (copyModules){
+
+      for (module in modules){
+        .copyModule(
+          modulePath = modulePath,
+          moduleName = module,
+          destDir    = spadesTestPaths$temp$modules
+        )
+      }
+    }else{
+
+      # If not copying module to temporary location: set module location in place
+      spadesTestPaths$temp$modules <- modulePath
+    }
+  }else modules <- moduleRepos
+
+  # Get initial library state
+  libPathsInit <- .libPaths()
+
+  # Use setupProject to set up modules and R package library
+  projectPath <- file.path(spadesTestPaths$temp$projects, "setup")
+  dir.create(projectPath)
+  withr::local_dir(projectPath)
+
+  setupList <- SpaDEStestMuffleOutput(
+    SpaDES.project::setupProject(
+
+      restart = FALSE,
+      updateRprofile = FALSE,
+
+      require = c("testthat", require),
+
+      modules = modules,
+      paths   = list(
+        projectPath = projectPath,
+        inputPath   = spadesTestPaths$temp$inputs,
+        packagePath = spadesTestPaths$temp$packages,
+        modulePath  = spadesTestPaths$temp$modules,
+        cachePath   = file.path(projectPath, "cache"),
+        outputPath  = file.path(projectPath, "outputs")
+      )
+    ),
+    ...
+  )
+
+  # Restore library paths on teardown
+  if (!is.null(teardownEnv)){
+    withr::defer(.libPaths(libPathsInit), envir = teardownEnv, priority = "last")
+  }
 
   # Remove temporary directories on test teardown
+  ## NOTE: Temporary R packages loaded and/or attached to the environment
+  ## may stop the library directory from being removed.
   if (!is.null(teardownEnv)){
     withr::defer({
       unlink(spadesTestPaths$temp$root, recursive = TRUE)
@@ -105,48 +178,6 @@ SpaDEStestSetUpDirectories <- function(
         "Temporary test directory could not be removed: ",
         spadesTestPaths$temp$root, call. = FALSE)
     }, envir = teardownEnv, priority = "last")
-  }
-
-  # Copy module(s) to the temporary testing directory
-  if (copyModule){
-
-    if (is.null(modules)) modules <- basename(spadesTestPaths$RProj)
-
-    for (module in modules){
-      .copyModule(
-        moduleDir  = dirname(spadesTestPaths$RProj),
-        moduleName = module,
-        destDir    = spadesTestPaths$temp$modules
-      )
-    }
-  }
-
-  # Install "testthat" with dependencies into the project R packages directory
-  ## This prevents dependencies from not being found when .libPaths() changes
-  libPathsInit <- .libPaths()
-  withr::defer(.libPaths(libPathsInit))
-
-  Require::setLibPaths(
-    libPaths       = c(spadesTestPaths$temp$packages, libPathsInit[-1]),
-    standAlone     = TRUE,
-    updateRprofile = FALSE,
-    exact          = FALSE,
-    verbose        = -2
-  )
-  withr::with_options(
-    c(Require.cloneFrom = libPathsInit[1]),
-    Require::Install(
-      "testthat",
-      dependencies = TRUE,
-      standAlone   = TRUE,
-      verbose      = -2
-    ))
-
-  # Restore library paths after testing
-  ## This likely should be where setupProject() is called (inside test_that),
-  ## but the packages that are left attached after running SpaDES stops it
-  if (!is.null(teardownEnv)){
-    withr::local_libpaths(libPathsInit, .local_envir = teardownEnv)
   }
 
   # Return test directories
@@ -182,15 +213,15 @@ SpaDEStestSetUpDirectories <- function(
 }
 
 # Copy module files
-.copyModule <- function(moduleDir, moduleName, destDir,
+.copyModule <- function(modulePath, moduleName, destDir,
                         include = c(paste0(moduleName, ".R"), "R", "data")){
 
-  modulePath <- file.path(moduleDir, moduleName)
-  if (!file.exists(modulePath)) stop(
-    "Module directory not found: ", modulePath)
+  modulePathFull <- file.path(modulePath, moduleName)
+  if (!file.exists(modulePathFull)) stop(
+    "Module directory not found: ", modulePathFull)
 
   # List module files
-  modFiles <- file.info(list.files(modulePath, full.names = TRUE))
+  modFiles <- file.info(list.files(modulePathFull, full.names = TRUE))
   modFiles$path <- row.names(modFiles)
   modFiles$name <- basename(modFiles$path)
 
@@ -203,7 +234,7 @@ SpaDEStestSetUpDirectories <- function(
 
   if (nrow(copyFiles) == 0) stop(
     "Module files not found in directory: ",
-    file.path(modulePath, moduleName))
+    file.path(modulePathFull, moduleName))
 
   copySuccess <- c()
   for (i in 1:nrow(copyFiles)){
