@@ -202,11 +202,12 @@ SpaDEStestSetUpDirectories <- function(
   spadesTestPaths$temp <- list(
     root = file.path(tempDir, paste0("testthat-", basename(spadesTestPaths$RProj)))
   )
+  spadesTestPaths$temp$packages <- file.path(spadesTestPaths$temp$root, "packages") # R package library
   spadesTestPaths$temp$inputs   <- file.path(spadesTestPaths$temp$root, "inputs")   # For shared inputs
-  spadesTestPaths$temp$outputs  <- file.path(spadesTestPaths$temp$root, "outputs")  # For function test outputs
-  spadesTestPaths$temp$modules  <- file.path(spadesTestPaths$temp$root, "modules")  # For modules
-  spadesTestPaths$temp$packages <- file.path(spadesTestPaths$temp$root, "library")  # R package library
+  spadesTestPaths$temp$modules  <- file.path(spadesTestPaths$temp$root, "modules")  # For shared modules
+  spadesTestPaths$temp$cache    <- file.path(spadesTestPaths$temp$root, "cache")    # For shared cache
   spadesTestPaths$temp$projects <- file.path(spadesTestPaths$temp$root, "projects") # For project directories
+  spadesTestPaths$temp$outputs  <- file.path(spadesTestPaths$temp$root, "outputs")  # For function test outputs
 
   # Return
   spadesTestPaths
