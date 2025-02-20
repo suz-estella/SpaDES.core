@@ -195,7 +195,7 @@ SpaDEStestSetUpDirectories <- function(
 
   # Set custom test paths
   for (testPath in testPaths){
-    spadesTestPaths[[testPath]] <- normalizePath(testthat::test_path(testPath))
+    spadesTestPaths[[testPath]] <- normalizePath(testthat::test_path(testPath), mustWork = FALSE)
   }
 
   # Set temporary directory paths
