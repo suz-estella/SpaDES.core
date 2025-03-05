@@ -66,42 +66,61 @@ SpaDEStestSetGlobalOptions <- function(
 #' that will be removed on test teardown.
 #' \code{\link[SpaDES.project]{setupProject}} is called to initialize modules and R packages.
 #'
-#' @param testPaths file or directory paths within the \code{tests/testthat}
-#' directory to add to the file list.
-#' By default a test data directory is included with location \code{tests/testthat/testdata}.
 #' @param modulePath character.
 #' By default, it is assumed the R project is a single module to be tested.
 #' Otherwise, provide a directory path (relative to the R project root)
 #' that contains modules to be tested.
 #' Ignored if \code{moduleRepos} is provided.
+#' @param moduleRepos character. Github repository locations of modules to test.
 #' @param copyModules logical.
 #' If TRUE, local modules will be copied to the temporary test directories before testing.
 #' Ignored if \code{moduleRepos} is provided.
-#' @param moduleRepos character. Github repository locations of modules to test.
+#' @param testPaths file or directory paths within the \code{tests/testthat}
+#' directory to add to the file list.
+#' By default a test data directory is included with location \code{tests/testthat/testdata}.
+#' @param inputPath character. Optional alternative location of the input data directory.
+#' Defaults to \code{getOption("spades.test.paths.inputs")}.
+#' This allows users to speed up testing by allowing inputs to persist between test runs.
+#' @param cachePath character. Optional alternative location of the cache directory.
+#' Defaults to \code{getOption("spades.test.paths.cache")}.
+#' This allows users to speed up testing by allowing cache to persist between test runs.
+#' @param packagePath character. Optional alternative location of the R packages directory.
+#' Defaults to \code{getOption("spades.test.paths.packages")}.
+#' This allows users to speed up testing by allowing packages to persist between test runs.
 #' @param require character. Additional R packages to require
+#' @param tempDir character. Optional. Path to location of temporary test directory.
 #' @param teardownEnv environment. Optional. Environment to use for scoping.
 #' The default for testing is the \code{testthat::teardown_env()}.
-#' @param tempDir character. Optional. Path to location of temporary test directory.
 #' @param ... passed to \code{\link[SpaDES.project]{setupProject}}
 #'
 #' @return list of test paths
 #' @export
 SpaDEStestSetUpDirectories <- function(
-    testPaths   = "testdata",
     modulePath  = NULL,
     moduleRepos = NULL,
+    copyModules = FALSE,
+    testPaths   = "testdata",
+    inputPath   = getOption("spades.test.paths.inputs"),
+    cachePath   = getOption("spades.test.paths.cache"),
+    packagePath = getOption("spades.test.paths.packages"),
     require     = NULL,
-    copyModules = testthat::is_testing(),
-    teardownEnv = if (testthat::is_testing()) testthat::teardown_env(),
     tempDir     = tempdir(),
+    teardownEnv = if (testthat::is_testing()) testthat::teardown_env(),
     ...){
 
   # List test paths and temporary directories
   spadesTestPaths <- .test_directories(tempDir = tempDir, testPaths = testPaths)
 
-  # Create temporary directories
-  for (d in spadesTestPaths$temp) dir.create(d)
+  # Set custom paths
+  if (!is.null(inputPath))   spadesTestPaths$temp$inputs   <- inputPath
+  if (!is.null(packagePath)) spadesTestPaths$temp$packages <- packagePath
+  if (!is.null(cachePath))   spadesTestPaths$temp$cache    <- cachePath
 
+  # Create temporary directories
+  dir.create(spadesTestPaths$temp$root, recursive = TRUE)
+  for (d in spadesTestPaths$temp) dir.create(d, showWarnings = FALSE)
+
+  # Copy and/or set paths to modules
   if (is.null(moduleRepos)){
 
     if (is.null(modulePath)){
@@ -124,7 +143,8 @@ SpaDEStestSetUpDirectories <- function(
         .copyModule(
           modulePath = modulePath,
           moduleName = module,
-          destDir    = spadesTestPaths$temp$modules
+          destDir    = spadesTestPaths$temp$modules,
+          overwrite  = TRUE
         )
       }
     }else{
@@ -185,7 +205,9 @@ SpaDEStestSetUpDirectories <- function(
 }
 
 # Set test directory paths
-.test_directories <- function(testPaths = NULL, tempDir = tempdir()){
+.test_directories <- function(
+    testPaths = NULL,
+    tempDir   = tempdir()){
 
   spadesTestPaths <- list()
 
@@ -215,7 +237,8 @@ SpaDEStestSetUpDirectories <- function(
 
 # Copy module files
 .copyModule <- function(modulePath, moduleName, destDir,
-                        include = c(paste0(moduleName, ".R"), "R", "data")){
+                        include = c(paste0(moduleName, ".R"), "R", "data"),
+                        overwrite = FALSE){
 
   modulePathFull <- file.path(modulePath, moduleName)
   if (!file.exists(modulePathFull)) stop(
@@ -228,6 +251,9 @@ SpaDEStestSetUpDirectories <- function(
 
   # Create module directory
   modDir <- file.path(destDir, moduleName)
+  if (file.exists(modDir) & overwrite) unlink(modDir, recursive = TRUE)
+  if (file.exists(modDir)) stop(
+    "Module already exists at destination. Try overwrite = TRUE: ", modDir)
   dir.create(modDir)
 
   # Copy module files

@@ -5,21 +5,20 @@
 \title{SpaDES test: Set up directories}
 \usage{
 SpaDEStestSetUpDirectories(
-  testPaths = "testdata",
   modulePath = NULL,
   moduleRepos = NULL,
+  copyModules = FALSE,
+  testPaths = "testdata",
+  inputPath = getOption("spades.test.paths.inputs"),
+  cachePath = getOption("spades.test.paths.cache"),
+  packagePath = getOption("spades.test.paths.packages"),
   require = NULL,
-  copyModules = testthat::is_testing(),
-  teardownEnv = if (testthat::is_testing()) testthat::teardown_env(),
   tempDir = tempdir(),
+  teardownEnv = if (testthat::is_testing()) testthat::teardown_env(),
   ...
 )
 }
 \arguments{
-\item{testPaths}{file or directory paths within the \code{tests/testthat}
-directory to add to the file list.
-By default a test data directory is included with location \code{tests/testthat/testdata}.}
-
 \item{modulePath}{character.
 By default, it is assumed the R project is a single module to be tested.
 Otherwise, provide a directory path (relative to the R project root)
@@ -28,16 +27,32 @@ Ignored if \code{moduleRepos} is provided.}
 
 \item{moduleRepos}{character. Github repository locations of modules to test.}
 
-\item{require}{character. Additional R packages to require}
-
 \item{copyModules}{logical.
 If TRUE, local modules will be copied to the temporary test directories before testing.
 Ignored if \code{moduleRepos} is provided.}
 
-\item{teardownEnv}{environment. Optional. Environment to use for scoping.
-The default for testing is the \code{testthat::teardown_env()}.}
+\item{testPaths}{file or directory paths within the \code{tests/testthat}
+directory to add to the file list.
+By default a test data directory is included with location \code{tests/testthat/testdata}.}
+
+\item{inputPath}{character. Optional alternative location of the input data directory.
+Defaults to \code{getOption("spades.test.paths.inputs")}.
+This allows users to speed up testing by allowing inputs to persist between test runs.}
+
+\item{cachePath}{character. Optional alternative location of the cache directory.
+Defaults to \code{getOption("spades.test.paths.cache")}.
+This allows users to speed up testing by allowing cache to persist between test runs.}
+
+\item{packagePath}{character. Optional alternative location of the R packages directory.
+Defaults to \code{getOption("spades.test.paths.packages")}.
+This allows users to speed up testing by allowing packages to persist between test runs.}
+
+\item{require}{character. Additional R packages to require}
 
 \item{tempDir}{character. Optional. Path to location of temporary test directory.}
+
+\item{teardownEnv}{environment. Optional. Environment to use for scoping.
+The default for testing is the \code{testthat::teardown_env()}.}
 
 \item{...}{passed to \code{\link[SpaDES.project]{setupProject}}}
 }
