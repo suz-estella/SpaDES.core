@@ -68,7 +68,7 @@ SpaDEStestSetGlobalOptions <- function(
 #'
 #' @param modulePath character.
 #' By default, it is assumed the R project is a single module to be tested.
-#' Otherwise, provide a directory path (relative to the R project root)
+#' Otherwise, provide a directory path (absolute or relative to the R project root)
 #' that contains modules to be tested.
 #' Ignored if \code{moduleRepos} is provided.
 #' @param moduleRepos character. Github repository locations of modules to test.
@@ -132,8 +132,9 @@ SpaDEStestSetUpDirectories <- function(
     }else{
 
       # R Project has a directory containing modules
-      modulePath <- normalizePath(file.path(spadesTestPaths$RProj, modulePath))
-      modules <- list.files(modulePath)
+      modulePathRel <- normalizePath(file.path(spadesTestPaths$RProj, modulePath), mustWork = FALSE)
+      modulePath <- ifelse(file.exists(modulePathRel), modulePathRel, modulePath)
+      modules <- list.dirs(modulePath, recursive = FALSE, full.names = FALSE)
     }
 
     # Copy module(s) to the temporary testing directory

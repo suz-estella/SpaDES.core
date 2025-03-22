@@ -21,7 +21,7 @@ SpaDEStestSetUpDirectories(
 \arguments{
 \item{modulePath}{character.
 By default, it is assumed the R project is a single module to be tested.
-Otherwise, provide a directory path (relative to the R project root)
+Otherwise, provide a directory path (absolute or relative to the R project root)
 that contains modules to be tested.
 Ignored if \code{moduleRepos} is provided.}
 
