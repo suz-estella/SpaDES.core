@@ -112,9 +112,9 @@ SpaDEStestSetUpDirectories <- function(
   spadesTestPaths <- .test_directories(tempDir = tempDir, testPaths = testPaths)
 
   # Set custom paths
-  if (!is.null(inputPath))   spadesTestPaths$temp$inputs   <- inputPath
-  if (!is.null(packagePath)) spadesTestPaths$temp$packages <- packagePath
-  if (!is.null(cachePath))   spadesTestPaths$temp$cache    <- cachePath
+  if (!is.null(inputPath))   spadesTestPaths$temp$inputs   <- normalizePath(inputPath)
+  if (!is.null(packagePath)) spadesTestPaths$temp$packages <- normalizePath(packagePath)
+  if (!is.null(cachePath))   spadesTestPaths$temp$cache    <- normalizePath(cachePath)
 
   # Create temporary directories
   dir.create(spadesTestPaths$temp$root, recursive = TRUE)
@@ -132,7 +132,7 @@ SpaDEStestSetUpDirectories <- function(
     }else{
 
       # R Project has a directory containing modules
-      modulePath <- file.path(spadesTestPaths$RProj, modulePath)
+      modulePath <- normalizePath(file.path(spadesTestPaths$RProj, modulePath))
       modules <- list.files(modulePath)
     }
 
