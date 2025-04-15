@@ -170,6 +170,7 @@ SpaDEStestSetUpDirectories <- function(
       updateRprofile = FALSE,
 
       require = c("testthat", require),
+      options = list(timeout = 600),
 
       modules = modules,
       paths   = list(
