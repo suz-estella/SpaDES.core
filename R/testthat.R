@@ -88,7 +88,6 @@ SpaDEStestSetGlobalOptions <- function(
 #' @param tempDir character. Optional. Path to location of temporary test directory.
 #' @param teardownEnv environment. Optional. Environment to use for scoping.
 #' The default for testing is the \code{testthat::teardown_env()}.
-#' @param ... passed to \code{\link[SpaDES.project]{setupProject}}
 #'
 #' @return list of test paths
 #' @export
@@ -100,8 +99,7 @@ SpaDEStestSetUpDirectories <- function(
     cachePath   = getOption("spades.test.paths.cache"),
     packagePath = getOption("spades.test.paths.packages"),
     tempDir     = tempdir(),
-    teardownEnv = if (testthat::is_testing()) testthat::teardown_env(),
-    ...){
+    teardownEnv = if (testthat::is_testing()) testthat::teardown_env()){
 
   # Set testing paths
   spadesTestPaths <- .test_directories(

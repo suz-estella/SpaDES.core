@@ -12,8 +12,7 @@ SpaDEStestSetUpDirectories(
   cachePath = getOption("spades.test.paths.cache"),
   packagePath = getOption("spades.test.paths.packages"),
   tempDir = tempdir(),
-  teardownEnv = if (testthat::is_testing()) testthat::teardown_env(),
-  ...
+  teardownEnv = if (testthat::is_testing()) testthat::teardown_env()
 )
 }
 \arguments{
@@ -47,8 +46,6 @@ This allows users to speed up testing by allowing packages to persist between te
 
 \item{teardownEnv}{environment. Optional. Environment to use for scoping.
 The default for testing is the \code{testthat::teardown_env()}.}
-
-\item{...}{passed to \code{\link[SpaDES.project]{setupProject}}}
 }
 \value{
 list of test paths
