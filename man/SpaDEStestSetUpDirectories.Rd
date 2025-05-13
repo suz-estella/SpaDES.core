@@ -6,13 +6,11 @@
 \usage{
 SpaDEStestSetUpDirectories(
   modulePath = NULL,
-  moduleRepos = NULL,
-  copyModules = FALSE,
+  modules = NULL,
   testPaths = "testdata",
   inputPath = getOption("spades.test.paths.inputs"),
   cachePath = getOption("spades.test.paths.cache"),
   packagePath = getOption("spades.test.paths.packages"),
-  require = NULL,
   tempDir = tempdir(),
   teardownEnv = if (testthat::is_testing()) testthat::teardown_env(),
   ...
@@ -20,16 +18,14 @@ SpaDEStestSetUpDirectories(
 }
 \arguments{
 \item{modulePath}{character.
-By default, it is assumed the R project is a single module to be tested.
+By default, it is assumed that the working directory is a module directory.
 Otherwise, provide a directory path (absolute or relative to the R project root)
 that contains modules to be tested.
-Ignored if \code{moduleRepos} is provided.}
+Set to NA to not copy any modules for testing.}
 
-\item{moduleRepos}{character. Github repository locations of modules to test.}
-
-\item{copyModules}{logical.
-If TRUE, local modules will be copied to the temporary test directories before testing.
-Ignored if \code{moduleRepos} is provided.}
+\item{modules}{character. Module(s) to copy for testing.
+Defaults to the working directory module.
+If \code{modulePath} is provided, all modules in this directory are included by default.}
 
 \item{testPaths}{file or directory paths within the \code{tests/testthat}
 directory to add to the file list.
@@ -47,8 +43,6 @@ This allows users to speed up testing by allowing cache to persist between test 
 Defaults to \code{getOption("spades.test.paths.packages")}.
 This allows users to speed up testing by allowing packages to persist between test runs.}
 
-\item{require}{character. Additional R packages to require}
-
 \item{tempDir}{character. Optional. Path to location of temporary test directory.}
 
 \item{teardownEnv}{environment. Optional. Environment to use for scoping.
@@ -60,12 +54,11 @@ The default for testing is the \code{testthat::teardown_env()}.}
 list of test paths
 }
 \description{
-Set up a temporary directory structure. See \strong{Details}.
+List test data directories and set up a temporary directory structure
+that will be removed on test teardown. See \strong{Details}.
 }
 \details{
 This function was designed to be called in a \code{tests/testthat/setup.R} file.
 
-This function will create a temporary directory structure
-that will be removed on test teardown.
-\code{\link[SpaDES.project]{setupProject}} is called to initialize modules and R packages.
+Module(s) will be copied to a temporary testing directory for testing.
 }
