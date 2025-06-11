@@ -16,6 +16,7 @@
 #' The defaults aim to provide an optimal environment for both standard
 #' and interactive testing.
 #'
+#' @param reproducible.useMemoise       reproducible.useMemoise R package global option.
 #' @param reproducible.verbose          reproducible.verbose R package global option.
 #' @param Require.verbose               Require.verbose R package global option.
 #' @param Require.cloneFrom             Require.cloneFrom R package global option.
@@ -28,6 +29,7 @@
 #'
 #' @export
 SpaDEStestSetGlobalOptions <- function(
+    reproducible.useMemoise       = TRUE,
     reproducible.verbose          = if (testthat::is_testing()) -2,
     Require.verbose               = if (testthat::is_testing()) -2,
     Require.cloneFrom             = Sys.getenv("R_LIBS_USER"),
@@ -38,6 +40,7 @@ SpaDEStestSetGlobalOptions <- function(
 
   # Set global options
   localOptions <- list(
+    reproducible.useMemoise       = reproducible.useMemoise,
     reproducible.verbose          = reproducible.verbose,
     Require.verbose               = Require.verbose,
     Require.cloneFrom             = Require.cloneFrom,

@@ -5,6 +5,7 @@
 \title{SpaDES test: Set up global options}
 \usage{
 SpaDEStestSetGlobalOptions(
+  reproducible.useMemoise = TRUE,
   reproducible.verbose = if (testthat::is_testing()) -2,
   Require.verbose = if (testthat::is_testing()) -2,
   Require.cloneFrom = Sys.getenv("R_LIBS_USER"),
@@ -15,6 +16,8 @@ SpaDEStestSetGlobalOptions(
 )
 }
 \arguments{
+\item{reproducible.useMemoise}{reproducible.useMemoise R package global option.}
+
 \item{reproducible.verbose}{reproducible.verbose R package global option.}
 
 \item{Require.verbose}{Require.verbose R package global option.}
