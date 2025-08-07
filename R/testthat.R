@@ -205,14 +205,15 @@ SpaDEStestSetUpDirectories <- function(
   spadesTestPaths$temp$modules  <- file.path(spadesTestPaths$temp$root, "modules")  # For shared modules
   spadesTestPaths$temp$inputs   <- file.path(spadesTestPaths$temp$root, "inputs")   # For shared inputs
   spadesTestPaths$temp$cache    <- file.path(spadesTestPaths$temp$root, "cache")    # For shared cache
-  spadesTestPaths$temp$projects <- file.path(spadesTestPaths$temp$root, "projects") # For project directories
-  spadesTestPaths$temp$outputs  <- file.path(spadesTestPaths$temp$root, "outputs")  # For other test outputs
+  spadesTestPaths$temp$outputs  <- file.path(spadesTestPaths$temp$root, "outputs")  # For outputs
+  spadesTestPaths$temp$projects <- file.path(spadesTestPaths$temp$root, "projects") # For project directories (temp)
 
   # Set shared project paths
   spadesTestPaths$modulePath  <- spadesTestPaths$temp$modules
-  spadesTestPaths$inputPath   <- c(inputPath, spadesTestPaths$temp$inputs)[[1]]
-  spadesTestPaths$cachePath   <- c(cachePath, spadesTestPaths$temp$cache)[[1]]
   spadesTestPaths$packagePath <- c(packagePath, .libPaths())[[1]]
+  spadesTestPaths$cachePath   <- c(cachePath, spadesTestPaths$temp$cache)[[1]]
+  spadesTestPaths$inputPath   <- c(inputPath, spadesTestPaths$temp$inputs)[[1]]
+  spadesTestPaths$outputPath  <- spadesTestPaths$temp$outputs
 
   # Return
   spadesTestPaths
