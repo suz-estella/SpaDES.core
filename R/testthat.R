@@ -209,6 +209,7 @@ SpaDEStestSetUpDirectories <- function(
   spadesTestPaths$temp$projects <- file.path(spadesTestPaths$temp$root, "projects") # For project directories (temp)
 
   # Set shared project paths
+  spadesTestPaths$projectPath <- spadesTestPaths$RProj
   spadesTestPaths$modulePath  <- spadesTestPaths$temp$modules
   spadesTestPaths$packagePath <- c(packagePath, .libPaths())[[1]]
   spadesTestPaths$cachePath   <- c(cachePath, spadesTestPaths$temp$cache)[[1]]
