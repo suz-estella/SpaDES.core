@@ -306,7 +306,7 @@ SpaDEStestMuffleOutput <- function(
         if (suppressWarnings){
           tryInvokeRestart("muffleWarning")
         }else{
-          if (grepl("^package ['\u2018]{1}[a-zA-Z0-9.]+['\u2019]{1} was built under R version [0-9.]+$", w$message)){
+          if (any(grepl("^package ['\u2018]{1}[a-zA-Z0-9.]+['\u2019]{1} was built under R version [0-9.]+$", w$message))){
             tryInvokeRestart("muffleWarning")
           }
         }
